@@ -31,3 +31,10 @@ if df is not None:
     df_sin_insumos = df[df['Especialidad'].isin(['Ecografia', 'Resonancia', 'Radiologia', 'Angio RM',
                                                  'Mamografia', 'Doppler', 'Tomografia', 'Densitometria',
                                                  'Puncion por Eco', 'Angio TAC', 'Puncion por TAC'])]
+
+    df.loc[(df["Practica"] == "Material de contraste para tomografía") & (
+                df["Especialidad"] == "Tomografia"), "Especialidad"] = "Contrastes"
+    df.loc[(df["Practica"] == "Material de Contraste para RMN") & (
+                df["Especialidad"] == "Resonancia"), "Especialidad"] = "Contrastes"
+    df.loc[(df["Practica"] == "Material descartable para punción prostática") & (
+                df["Especialidad"] == "Puncion por Eco"), "Especialidad"] = "Descartables"
