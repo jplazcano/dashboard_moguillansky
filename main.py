@@ -60,6 +60,8 @@ if df is not None:
     # Facturación y cantidad de estudios e insumos por especialidad
 
     datos_especialidad_dict = {}
+    datos_especialidad_grafico_dict = {}
+
     for servicio in servicios:
         df_ser = df.loc[df['Servicio'] == servicio]
         monto_por_especialidad = df_ser.groupby('Especialidad')['Cantidad', 'Monto Total'].sum().astype(
@@ -68,10 +70,26 @@ if df is not None:
         total_monto = monto_por_especialidad['Monto Total'].sum()
         total_cantidad = monto_por_especialidad['Cantidad'].sum()
 
+        fig1 = go.Figure(data=[go.Bar(x=monto_por_especialidad.index,
+                                      y=monto_por_especialidad['Monto Total'])])
+        fig1.update_layout(
+            xaxis=dict(title="Especialidad", showgrid=True, gridcolor='lightgray', gridwidth=1),
+            yaxis=dict(title="Monto ($)", showgrid=True, gridcolor='lightgray', gridwidth=1),
+            title="Monto Por Especialidad",
+        )
+
+        fig2 = go.Figure(data=[go.Bar(x=monto_por_especialidad.index,
+                                      y=monto_por_especialidad['Cantidad'])])
+        fig2.update_layout(
+            xaxis=dict(title="Especialidad", showgrid=True, gridcolor='lightgray', gridwidth=1),
+            yaxis=dict(title="Monto ($)", showgrid=True, gridcolor='lightgray', gridwidth=1),
+            title="Cantidad Por Especialidad",
+        )
+
         monto_por_especialidad.loc['Total'] = [total_cantidad, total_monto]
 
         monto_por_especialidad = monto_por_especialidad.assign(
-            Porcentaje_Monto=lambda x: x['Monto Total'] / total_monto * 100).round(2)
+            Porcentaje=lambda x: x['Monto Total'] / total_monto * 100).round(2)
 
         monto_por_especialidad = monto_por_especialidad.assign(
             Media=lambda x: x['Monto Total'] / x['Cantidad'])
@@ -81,6 +99,7 @@ if df is not None:
         # monto_por_especialidad = monto_por_especialidad.style.format(
         # {'Monto Total': "$ {:,.0f}", 'Porcentaje': "{:,.2f} %", 'Cantidad': '{:,.0f}'})
         datos_especialidad_dict[servicio] = monto_por_especialidad
+        datos_especialidad_grafico_dict[servicio] = fig1, fig2
 
     # Facturación y cantidad de estudios e insumos por equipo
 
@@ -93,8 +112,10 @@ if df is not None:
         total_cantidad = monto_por_equipo['Cantidad'].sum()
         monto_por_equipo.loc['Total'] = [total_cantidad, total_monto]
         monto_por_equipo = monto_por_equipo.assign(Porcentaje=lambda x: x['Monto Total'] / total_monto * 100)
-        monto_por_equipo = monto_por_equipo.style.format(
-            {'Monto Total': "$ {:,.0f}", 'Porcentaje': "{:,.2f} %", 'Cantidad': '{:,.0f}'})
+
+
+        # monto_por_equipo = monto_por_equipo.style.format(
+        # {'Monto Total': "$ {:,.0f}", 'Porcentaje': "{:,.2f} %", 'Cantidad': '{:,.0f}'})
         datos_por_equipo_dict[servicio] = monto_por_equipo
 
     # Facturación y cantidad de estudios e insumos por obra social
@@ -117,19 +138,21 @@ if df is not None:
 
         new_df = new_df.assign(Porcentaje_cantidad=lambda x: x['Cantidad'] / total_cantidad * 100)
         new_df = new_df.assign(Porcentaje_monto=lambda x: x['Monto Total'] / total_monto * 100)
+        new_df = new_df.assign(Media=lambda x: x['Monto Total'] / x['Cantidad'])
+        new_df['Media'] = new_df['Media'].astype(int)
 
-        new_df = new_df.style.format(
-            {'Monto Total': "$ {:,.0f}", 'Porcentaje_cantidad': "{:,.2f} %", 'Cantidad': '{:,.0f}',
-             'Porcentaje_monto': "{:,.2f} %"})
+        #  new_df = new_df.style.format(
+        #      {'Monto Total': "$ {:,.0f}", 'Porcentaje_cantidad': "{:,.2f} %", 'Cantidad': '{:,.0f}',
+        #      'Porcentaje_monto': "{:,.2f} %"})
         datos_por_os_dict[servicio] = new_df
 
     # Facturación y cantidad de estudios e insumos por práctica
 
     datos_por_practica_dict = {}
     for servicio in servicios:
-        df = df.loc[df['Servicio'] == servicio]
+        df_ser = df.loc[df['Servicio'] == servicio]
 
-        datos_por_practica = df.groupby('Practica')['Cantidad', 'Monto Total'].sum().astype(int).sort_values(
+        datos_por_practica = df_ser.groupby('Practica')['Cantidad', 'Monto Total'].sum().astype(int).sort_values(
             by='Monto Total', ascending=False)
 
         total_monto = datos_por_practica['Monto Total'].sum()
@@ -138,11 +161,16 @@ if df is not None:
 
         datos_por_practica = datos_por_practica.assign(
             Porcentaje_cantidad=lambda x: x['Cantidad'] / total_cantidad * 100)
-        datos_por_practica = datos_por_practica.assign(Porcentaje_monto=lambda x: x['Monto Total'] / total_monto * 100)
+        datos_por_practica = datos_por_practica.assign(
+            Porcentaje_monto=lambda x: x['Monto Total'] / total_monto * 100)
+        datos_por_practica = datos_por_practica.assign(
+            Media=lambda x: x['Monto Total'] / x['Cantidad'])
+        datos_por_practica = datos_por_practica.fillna(0)
+        datos_por_practica['Media'] = datos_por_practica['Media'].astype(int)
 
-        datos_por_practica = datos_por_practica.style.format(
-            {'Monto Total': "$ {:,.0f}", 'Porcentaje_cantidad': "{:,.2f} %", 'Cantidad': '{:,.0f}',
-             'Porcentaje_monto': "{:,.2f} %"})
+        # datos_por_practica = datos_por_practica.style.format(
+        # {'Monto Total': "$ {:,.0f}", 'Porcentaje_cantidad': "{:,.2f} %", 'Cantidad': '{:,.0f}',
+        #  'Porcentaje_monto': "{:,.2f} %"})
         datos_por_practica_dict[servicio] = datos_por_practica
 
     # Facturación y cantidad de estudios e insumos por médico derivante
@@ -160,18 +188,21 @@ if df is not None:
 
         datos_por_md = datos_por_md.assign(Porcentaje_cantidad=lambda x: x['Cantidad'] / total_cantidad * 100)
         datos_por_md = datos_por_md.assign(Porcentaje_monto=lambda x: x['Monto Total'] / total_monto * 100)
-        datos_por_md = datos_por_md.assign(Media_estudio=lambda x: x['Monto Total'] / x['Cantidad'])
+        datos_por_md = datos_por_md.assign(Media=lambda x: x['Monto Total'] / x['Cantidad'])
+        datos_por_md['Media'] = datos_por_md['Media'].astype(int)
 
-        datos_por_md = datos_por_md.style.format(
-            {'Monto Total': "$ {:,.0f}", 'Porcentaje_cantidad': "{:,.2f} %", 'Cantidad': '{:,.0f}',
-             'Porcentaje_monto': "{:,.2f} %",
-             'Media_estudio': "$ {:,.0f}"})
+        #datos_por_md = datos_por_md.style.format(
+         #   {'Monto Total': "$ {:,.0f}", 'Porcentaje_cantidad': "{:,.2f} %", 'Cantidad': '{:,.0f}',
+           #  'Porcentaje_monto': "{:,.2f} %",
+             #'Media_estudio': "$ {:,.0f}"})
         datos_por_md_dict[servicio] = datos_por_md
 
     selected_service = st.selectbox("Select a service:", servicios)
     st.header('Servicio de ' + selected_service)
     st.subheader('Servicio de ' + selected_service + ' por Especialidad')
     st.dataframe(datos_especialidad_dict[selected_service], use_container_width=True)
+    st.plotly_chart(datos_especialidad_grafico_dict[selected_service][1])
+    st.plotly_chart(datos_especialidad_grafico_dict[selected_service][0])
     st.subheader('Servicio de ' + selected_service + ' por Equipo')
     st.dataframe(datos_por_equipo_dict[selected_service], use_container_width=True)
     st.subheader('Servicio de ' + selected_service + ' por Obra Social')
@@ -180,3 +211,4 @@ if df is not None:
     st.dataframe(datos_por_practica_dict[selected_service], use_container_width=True)
     st.subheader('Servicio de ' + selected_service + ' por Médico Derivante')
     st.dataframe(datos_por_md_dict[selected_service], use_container_width=True)
+
