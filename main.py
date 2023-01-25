@@ -7,8 +7,6 @@ from plotly.subplots import make_subplots
 
 st.set_page_config(page_title='JP Analytics', page_icon=None, initial_sidebar_state="auto", menu_items=None)
 
-image = Image.open('/Users/juanpe/Desktop/dashboard_moguillansky/Screenshot 2023-01-23 at 20.14.19.png')
-st.image(image)
 
 # TITULO / INSTRUCCIONES
 archivo = st.sidebar.file_uploader("", type="xls", accept_multiple_files=True)
@@ -70,21 +68,27 @@ if df is not None:
         total_monto = monto_por_especialidad['Monto Total'].sum()
         total_cantidad = monto_por_especialidad['Cantidad'].sum()
 
-        fig1 = go.Figure(data=[go.Bar(x=monto_por_especialidad.index,
-                                      y=monto_por_especialidad['Monto Total'])])
-        fig1.update_layout(
-            xaxis=dict(title="Especialidad", showgrid=True, gridcolor='lightgray', gridwidth=1),
-            yaxis=dict(title="Monto ($)", showgrid=True, gridcolor='lightgray', gridwidth=1),
-            title="Monto Por Especialidad",
-        )
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        fig2 = go.Figure(data=[go.Bar(x=monto_por_especialidad.index,
-                                      y=monto_por_especialidad['Cantidad'])])
-        fig2.update_layout(
-            xaxis=dict(title="Especialidad", showgrid=True, gridcolor='lightgray', gridwidth=1),
-            yaxis=dict(title="Monto ($)", showgrid=True, gridcolor='lightgray', gridwidth=1),
-            title="Cantidad Por Especialidad",
-        )
+        fig.add_trace(go.Bar(x=monto_por_especialidad.index,
+                             y=monto_por_especialidad['Cantidad'],
+                             name='Cantidad',
+                             marker_color='#176ba0',
+                             opacity=1,
+                             width=0.3,
+                             offset=-0.3),
+                      secondary_y=False)
+
+        fig.add_trace(go.Bar(x=monto_por_especialidad.index,
+                             y=monto_por_especialidad['Monto Total'],
+                             name='Monto ($)',
+                             marker_color='#1de4bd',
+                             opacity=1,
+                             width=0.3,
+                             offset=0),
+                      secondary_y=True)
+
+        fig.update_layout(title='Cantidad y monto facturado por Especialidad -  Servicio de ' + str(servicio))
 
         monto_por_especialidad.loc['Total'] = [total_cantidad, total_monto]
 
@@ -99,7 +103,7 @@ if df is not None:
         # monto_por_especialidad = monto_por_especialidad.style.format(
         # {'Monto Total': "$ {:,.0f}", 'Porcentaje': "{:,.2f} %", 'Cantidad': '{:,.0f}'})
         datos_especialidad_dict[servicio] = monto_por_especialidad
-        datos_especialidad_grafico_dict[servicio] = fig1, fig2
+        datos_especialidad_grafico_dict[servicio] = fig
 
     # Facturación y cantidad de estudios e insumos por equipo
     datos_por_equipo_dict = {}
@@ -109,13 +113,27 @@ if df is not None:
         monto_por_equipo = df_ser.groupby('Equipo')['Cantidad', 'Monto Total'].sum().astype(int).sort_values(
             by='Monto Total', ascending=False)
 
-        fig = go.Figure(data=[go.Bar(x=monto_por_equipo.index,
-                                     y=monto_por_equipo['Cantidad'])])
-        fig.update_layout(
-            xaxis=dict(title="Equipo", showgrid=True, gridcolor='lightgray', gridwidth=1),
-            yaxis=dict(title="Cantidad", showgrid=True, gridcolor='lightgray', gridwidth=1),
-            title="Cantidad Por Equipo",
-        )
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+        fig.add_trace(go.Bar(x=monto_por_equipo.index,
+                             y=monto_por_equipo['Cantidad'],
+                             name='Cantidad',
+                             marker_color='#176ba0',
+                             opacity=1,
+                             width=0.3,
+                             offset=-0.3),
+                      secondary_y=False)
+
+        fig.add_trace(go.Bar(x=monto_por_equipo.index,
+                             y=monto_por_equipo['Monto Total'],
+                             name='Monto ($)',
+                             marker_color='#1de4bd',
+                             opacity=1,
+                             width=0.3,
+                             offset=0),
+                      secondary_y=True)
+
+        fig.update_layout(title='Cantidad y monto facturado por Equipo -  Servicio de ' + str(servicio))
 
         total_monto = monto_por_equipo['Monto Total'].sum()
         total_cantidad = monto_por_equipo['Cantidad'].sum()
@@ -140,21 +158,27 @@ if df is not None:
         monto_por_os = df_ser_con_insumos.groupby('Obra Social')['Monto Total'].sum().astype(int).sort_values(
             ascending=False).to_frame()
 
-        fig1 = go.Figure(data=[go.Bar(x=monto_por_os.iloc[:20].index,
-                                      y=monto_por_os.iloc[:20]['Monto Total'])])
-        fig1.update_layout(
-            xaxis=dict(title="Obra Social", showgrid=True, gridcolor='lightgray', gridwidth=1),
-            yaxis=dict(title="Monto ($)", showgrid=True, gridcolor='lightgray', gridwidth=1),
-            title="Monto Por Obra Social (top 20)",
-        )
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        fig2 = go.Figure(data=[go.Bar(x=cantidad_por_os.iloc[:20].index,
-                                      y=cantidad_por_os.iloc[:20]['Cantidad'])])
-        fig2.update_layout(
-            xaxis=dict(title="Obra Social", showgrid=True, gridcolor='lightgray', gridwidth=1),
-            yaxis=dict(title="Cantidad", showgrid=True, gridcolor='lightgray', gridwidth=1),
-            title="Cantidad Por Obra Social (top 20)",
-        )
+        fig.add_trace(go.Bar(x=monto_por_os.iloc[:15].index,
+                             y=cantidad_por_os['Cantidad'],
+                             name='Cantidad',
+                             marker_color='#176ba0',
+                             opacity=1,
+                             width=0.3,
+                             offset=-0.3),
+                      secondary_y=False)
+
+        fig.add_trace(go.Bar(x=monto_por_os.iloc[:15].index,
+                             y=monto_por_os['Monto Total'],
+                             name='Monto ($)',
+                             marker_color='#1de4bd',
+                             opacity=1,
+                             width=0.3,
+                             offset=0),
+                      secondary_y=True)
+
+        fig.update_layout(title='Cantidad y monto facturado por Obra Social -  Servicio de ' + str(servicio) + ' (top 15)')
 
         new_df = cantidad_por_os.merge(monto_por_os, on='Obra Social')
 
@@ -164,11 +188,12 @@ if df is not None:
 
         new_df = new_df.assign(Porcentaje_cantidad=lambda x: x['Cantidad'] / total_cantidad * 100)
         new_df = new_df.assign(Porcentaje_monto=lambda x: x['Monto Total'] / total_monto * 100)
-        new_df = new_df.assign(Media=lambda x: x['Monto Total'] / x['Cantidad'])
-        new_df['Media'] = new_df['Media'].astype(int)
+        new_df = new_df.assign(Ratio=lambda x: x['Porcentaje_monto'] / x['Porcentaje_cantidad'])
+        new_df = new_df.assign(Media_estudio=lambda x: x['Monto Total'] / x['Cantidad'])
+        new_df['Media_estudio'] = new_df['Media_estudio'].astype(int)
 
         datos_por_os_dict[servicio] = new_df
-        datos_por_os_grafico_dict[servicio] = fig1, fig2
+        datos_por_os_grafico_dict[servicio] = fig
 
     # Facturación y cantidad de estudios e insumos por práctica
 
@@ -184,21 +209,28 @@ if df is not None:
         total_cantidad = datos_por_practica['Cantidad'].sum()
         datos_por_practica.loc['Total'] = [total_cantidad, total_monto]
 
-        fig1 = go.Figure(data=[go.Bar(x=datos_por_practica.iloc[:20].index,
-                                      y=datos_por_practica.iloc[:20]['Monto Total'])])
-        fig1.update_layout(
-            xaxis=dict(title="Práctica/Insumo", showgrid=True, gridcolor='lightgray', gridwidth=1),
-            yaxis=dict(title="Monto ($)", showgrid=True, gridcolor='lightgray', gridwidth=1),
-            title="Monto Por Práctica/Insumo (top 20)",
-        )
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        fig2 = go.Figure(data=[go.Bar(x=datos_por_practica.iloc[:20].index,
-                                      y=datos_por_practica.iloc[:20]['Cantidad'])])
-        fig2.update_layout(
-            xaxis=dict(title="Práctica/Insumo", showgrid=True, gridcolor='lightgray', gridwidth=1),
-            yaxis=dict(title="Cantidad", showgrid=True, gridcolor='lightgray', gridwidth=1),
-            title="Cantidad por Práctica/Insumo (top 20)",
-        )
+        fig.add_trace(go.Bar(x=monto_por_os.iloc[:15].index,
+                             y=cantidad_por_os['Cantidad'],
+                             name='Cantidad',
+                             marker_color='#176ba0',
+                             opacity=1,
+                             width=0.3,
+                             offset=-0.3),
+                      secondary_y=False)
+
+        fig.add_trace(go.Bar(x=monto_por_os.iloc[:15].index,
+                             y=monto_por_os['Monto Total'],
+                             name='Monto ($)',
+                             marker_color='#1de4bd',
+                             opacity=1,
+                             width=0.3,
+                             offset=0),
+                      secondary_y=True)
+
+        fig.update_layout(
+            title='Cantidad y monto facturado por Obra Social -  Servicio de ' + str(servicio) + ' (top 15)')
 
         datos_por_practica = datos_por_practica.assign(
             Porcentaje_cantidad=lambda x: x['Cantidad'] / total_cantidad * 100)
@@ -213,7 +245,7 @@ if df is not None:
         # {'Monto Total': "$ {:,.0f}", 'Porcentaje_cantidad': "{:,.2f} %", 'Cantidad': '{:,.0f}',
         #  'Porcentaje_monto': "{:,.2f} %"})
         datos_por_practica_dict[servicio] = datos_por_practica
-        datos_por_practica_figura_dict[servicio] = fig1, fig2
+        datos_por_practica_figura_dict[servicio] = fig
 
     # Facturación y cantidad de estudios e insumos por médico derivante
 
@@ -267,8 +299,7 @@ if df is not None:
     st.header('Servicio de ' + selected_service)
     st.subheader('Servicio de ' + selected_service + ' por Especialidad')
     st.dataframe(datos_especialidad_dict[selected_service], use_container_width=True)
-    st.plotly_chart(datos_especialidad_grafico_dict[selected_service][0])
-    st.plotly_chart(datos_especialidad_grafico_dict[selected_service][1])
+    st.plotly_chart(datos_especialidad_grafico_dict[selected_service])
 
     st.subheader('Servicio de ' + selected_service + ' por Equipo')
     st.dataframe(datos_por_equipo_dict[selected_service], use_container_width=True)
@@ -276,16 +307,15 @@ if df is not None:
 
     st.subheader('Servicio de ' + selected_service + ' por Obra Social')
     st.dataframe(datos_por_os_dict[selected_service], use_container_width=True)
-    st.plotly_chart(datos_por_os_grafico_dict[selected_service][0])
-    st.plotly_chart(datos_por_os_grafico_dict[selected_service][1])
+    st.plotly_chart(datos_por_os_grafico_dict[selected_service])
+
 
     st.subheader('Servicio de ' + selected_service + ' por Práctica')
     st.dataframe(datos_por_practica_dict[selected_service], use_container_width=True)
-    st.plotly_chart(datos_por_practica_figura_dict[selected_service][0])
-    st.plotly_chart(datos_por_practica_figura_dict[selected_service][1])
+    st.plotly_chart(datos_por_practica_figura_dict[selected_service])
 
     st.subheader('Servicio de ' + selected_service + ' por Médico Derivante')
     st.dataframe(datos_por_md_dict[selected_service], use_container_width=True)
     st.plotly_chart(datos_por_md_grafico_dict[selected_service])
-    #st.plotly_chart(datos_por_md_grafico_dict[selected_service][1])
+
 
