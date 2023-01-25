@@ -32,8 +32,7 @@ if df is not None:
     df['Mes'] = df['Fecha Turno'].dt.month
     df['Día'] = df['Fecha Turno'].dt.weekday
 
-
-
+    df = df.fillna(0)
 
     # La clínica tiene que facturar material de contraste y descartable a veces en la especialidad incorrecta, no es
     # un error, sino que así lo deben hacer. Para el análisis hay que arreglarlo para obtener la cantidad correcta de
@@ -97,11 +96,9 @@ if df is not None:
 
         monto_por_especialidad = monto_por_especialidad.assign(
             Media=lambda x: x['Monto Total'] / x['Cantidad'])
-
+        monto_por_especialidad = monto_por_especialidad.fillna(0)
         monto_por_especialidad['Media'] = monto_por_especialidad['Media'].astype(int)
 
-        # monto_por_especialidad = monto_por_especialidad.style.format(
-        # {'Monto Total': "$ {:,.0f}", 'Porcentaje': "{:,.2f} %", 'Cantidad': '{:,.0f}'})
         datos_especialidad_dict[servicio] = monto_por_especialidad
         datos_especialidad_grafico_dict[servicio] = fig
 
@@ -138,6 +135,7 @@ if df is not None:
         total_monto = monto_por_equipo['Monto Total'].sum()
         total_cantidad = monto_por_equipo['Cantidad'].sum()
         monto_por_equipo.loc['Total'] = [total_cantidad, total_monto]
+        monto_por_equipo = monto_por_equipo.fillna(0)
         monto_por_equipo = monto_por_equipo.assign(Porcentaje=lambda x: x['Monto Total'] / total_monto * 100)
 
         # monto_por_equipo = monto_por_equipo.style.format(
@@ -185,7 +183,7 @@ if df is not None:
         total_monto = new_df['Monto Total'].sum()
         total_cantidad = new_df['Cantidad'].sum()
         new_df.loc['Total'] = [total_cantidad, total_monto]
-
+        new_df = new_df.fillna(0)
         new_df = new_df.assign(Porcentaje_cantidad=lambda x: x['Cantidad'] / total_cantidad * 100)
         new_df = new_df.assign(Porcentaje_monto=lambda x: x['Monto Total'] / total_monto * 100)
         new_df = new_df.assign(Ratio=lambda x: x['Porcentaje_monto'] / x['Porcentaje_cantidad'])
@@ -231,7 +229,7 @@ if df is not None:
 
         fig.update_layout(
             title='Cantidad y monto facturado por Obra Social -  Servicio de ' + str(servicio) + ' (top 15)')
-
+        datos_por_practica = datos_por_practica.fillna(0)
         datos_por_practica = datos_por_practica.assign(
             Porcentaje_cantidad=lambda x: x['Cantidad'] / total_cantidad * 100)
         datos_por_practica = datos_por_practica.assign(
@@ -283,7 +281,7 @@ if df is not None:
         total_cantidad = datos_por_md['Cantidad'].sum()
         datos_por_md.loc['Total'] = [total_cantidad, total_monto]
 
-
+        datos_por_md = datos_por_md.fillna(0)
         datos_por_md = datos_por_md.assign(Porcentaje_cantidad=lambda x: x['Cantidad'] / total_cantidad * 100)
         datos_por_md = datos_por_md.assign(Porcentaje_monto=lambda x: x['Monto Total'] / total_monto * 100)
         datos_por_md = datos_por_md.assign(Media_estudio=lambda x: x['Monto Total'] / x['Cantidad'])
