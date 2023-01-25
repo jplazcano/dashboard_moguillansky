@@ -4,6 +4,7 @@ from PIL import Image
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from matplotlib.pyplot import *
 
 st.set_page_config(page_title='JP Analytics', page_icon=None, initial_sidebar_state="auto", menu_items=None)
 
@@ -30,7 +31,11 @@ if df is not None:
     # Agrego número de día, mes y año
     df['Año'] = df['Fecha Turno'].dt.year
     df['Mes'] = df['Fecha Turno'].dt.month
-    df['Día'] = df['Fecha Turno'].dt.weekday
+    df['Dia'] = df['Fecha Turno'].dt.weekday
+
+    min_date = df['Fecha Turno'].min().strftime('%d/%m/%Y')
+    max_date = df['Fecha Turno'].max().strftime('%d/%m/%Y')
+
 
     df = df.fillna(0)
 
@@ -54,6 +59,8 @@ if df is not None:
                  'Radiologia', 'Mamografia', 'Densitometria']
 
     df_sin_insumos = df.loc[df['Especialidad'].isin(estudios)]
+
+    cant_rm = df_sin_insumos[df_sin_insumos['Especialidad'].isin(['Resonancia', 'Angio RM'])].sum()
 
     # Facturación y cantidad de estudios e insumos por especialidad
 
@@ -106,14 +113,19 @@ if df is not None:
     datos_por_equipo_dict = {}
     datos_por_equipo_grafico_dict = {}
     for servicio in servicios:
-        df_ser = df_sin_insumos.loc[df_sin_insumos['Servicio'] == servicio]
-        monto_por_equipo = df_ser.groupby('Equipo')['Cantidad', 'Monto Total'].sum().astype(int).sort_values(
-            by='Monto Total', ascending=False)
+
+        df_ser_sin_insumos1 = df_sin_insumos.loc[df_sin_insumos['Servicio'] == servicio]
+        df_ser_con_insumos1 = df.loc[df['Servicio'] == servicio]
+
+        cantidad_por_equipo = df_ser_sin_insumos1.groupby('Equipo')['Cantidad'].sum().astype(int).sort_values(
+            ascending=False).to_frame()
+        monto_por_equipo = df_ser_con_insumos1.groupby('Equipo')['Monto Total'].sum().astype(int).sort_values(
+            ascending=False).to_frame()
 
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
         fig.add_trace(go.Bar(x=monto_por_equipo.index,
-                             y=monto_por_equipo['Cantidad'],
+                             y=cantidad_por_equipo['Cantidad'],
                              name='Cantidad',
                              marker_color='#176ba0',
                              opacity=1,
@@ -132,16 +144,22 @@ if df is not None:
 
         fig.update_layout(title='Cantidad y monto facturado por Equipo -  Servicio de ' + str(servicio))
 
-        total_monto = monto_por_equipo['Monto Total'].sum()
-        total_cantidad = monto_por_equipo['Cantidad'].sum()
-        monto_por_equipo.loc['Total'] = [total_cantidad, total_monto]
-        monto_por_equipo = monto_por_equipo.fillna(0)
-        monto_por_equipo = monto_por_equipo.assign(Porcentaje=lambda x: x['Monto Total'] / total_monto * 100)
+        new_df1 = cantidad_por_equipo.merge(monto_por_equipo, on='Equipo')
 
-        # monto_por_equipo = monto_por_equipo.style.format(
-        #   {'Monto Total': "$ {:,.0f}", 'Porcentaje': "{:,.2f} %", 'Cantidad': '{:,.0f}'})
-        datos_por_equipo_dict[servicio] = monto_por_equipo
+        total_monto1 = new_df1['Monto Total'].sum()
+        total_cantidad1 = new_df1['Cantidad'].sum()
+        new_df1.loc['Total'] = [total_cantidad1, total_monto1]
+        new_df1 = new_df1.fillna(0)
+        new_df1 = new_df1.assign(Porcentaje_cantidad=lambda x: x['Cantidad'] / total_cantidad1 * 100)
+        new_df1 = new_df1.assign(Porcentaje_monto=lambda x: x['Monto Total'] / total_monto1 * 100)
+        new_df1 = new_df1.assign(Ratio=lambda x: x['Porcentaje_monto'] / x['Porcentaje_cantidad'])
+        new_df1 = new_df1.assign(Media_estudio=lambda x: x['Monto Total'] / x['Cantidad'])
+        new_df1['Media_estudio'] = new_df1['Media_estudio'].astype(int)
+
+
+        datos_por_equipo_dict[servicio] = new_df1
         datos_por_equipo_grafico_dict[servicio] = fig
+
 
     # Facturación y cantidad de estudios e insumos por obra social
 
@@ -295,25 +313,64 @@ if df is not None:
     selected_service = st.selectbox("Elegí un servicio:", servicios)
 
     st.header('Servicio de ' + selected_service)
+    st.write(
+        f'Durante el período evaluado, comprendido entre el {min_date} y el {max_date}, la clínica llevó a cabo'
+          ' un total de '
+    )
     st.subheader('Servicio de ' + selected_service + ' por Especialidad')
-    st.dataframe(datos_especialidad_dict[selected_service], use_container_width=True)
+    st.dataframe(datos_especialidad_dict[selected_service].style.format({'Monto Total': "$ {:,.0f}",
+                                                                         'Porcentaje_cantidad': "{:,.2f} %",
+                                                                         'Cantidad': '{:,.0f}',
+                                                                         'Porcentaje_monto': "{:,.2f} %",
+                                                                         'Porcentaje': "{:,.2f} %",
+                                                                         'Media_estudio': "$ {:,.0f}",
+                                                                         'Cantidad':'{:,.0f}'}),
+                  use_container_width=True)
     st.plotly_chart(datos_especialidad_grafico_dict[selected_service])
 
     st.subheader('Servicio de ' + selected_service + ' por Equipo')
-    st.dataframe(datos_por_equipo_dict[selected_service], use_container_width=True)
+    st.dataframe(datos_por_equipo_dict[selected_service].style.format({'Monto Total': "$ {:,.0f}",
+                                                                         'Porcentaje_cantidad': "{:,.2f} %",
+                                                                         'Cantidad': '{:,.0f}',
+                                                                         'Porcentaje_monto': "{:,.2f} %",
+                                                                         'Porcentaje': "{:,.2f} %",
+                                                                         'Media_estudio': "$ {:,.0f}",
+                                                                         'Cantidad':'{:,.0f}'}),
+                 use_container_width=True)
     st.plotly_chart(datos_por_equipo_grafico_dict[selected_service])
 
     st.subheader('Servicio de ' + selected_service + ' por Obra Social')
-    st.dataframe(datos_por_os_dict[selected_service], use_container_width=True)
+    st.dataframe(datos_por_os_dict[selected_service].style.format({'Monto Total': "$ {:,.0f}",
+                                                                         'Porcentaje_cantidad': "{:,.2f} %",
+                                                                         'Cantidad': '{:,.0f}',
+                                                                         'Porcentaje_monto': "{:,.2f} %",
+                                                                         'Porcentaje': "{:,.2f} %",
+                                                                         'Media_estudio': "$ {:,.0f}",
+                                                                         'Cantidad':'{:,.0f}'}),
+                 use_container_width=True)
     st.plotly_chart(datos_por_os_grafico_dict[selected_service])
 
 
     st.subheader('Servicio de ' + selected_service + ' por Práctica')
-    st.dataframe(datos_por_practica_dict[selected_service], use_container_width=True)
+    st.dataframe(datos_por_practica_dict[selected_service].style.format({'Monto Total': "$ {:,.0f}",
+                                                                         'Porcentaje_cantidad': "{:,.2f} %",
+                                                                         'Cantidad': '{:,.0f}',
+                                                                         'Porcentaje_monto': "{:,.2f} %",
+                                                                         'Porcentaje': "{:,.2f} %",
+                                                                         'Media_estudio': "$ {:,.0f}",
+                                                                         'Cantidad':'{:,.0f}'}),
+                 use_container_width=True)
     st.plotly_chart(datos_por_practica_figura_dict[selected_service])
 
     st.subheader('Servicio de ' + selected_service + ' por Médico Derivante')
-    st.dataframe(datos_por_md_dict[selected_service], use_container_width=True)
+    st.dataframe(datos_por_md_dict[selected_service].style.format({'Monto Total': "$ {:,.0f}",
+                                                                         'Porcentaje_cantidad': "{:,.2f} %",
+                                                                         'Cantidad': '{:,.0f}',
+                                                                         'Porcentaje_monto': "{:,.2f} %",
+                                                                         'Porcentaje': "{:,.2f} %",
+                                                                         'Media_estudio': "$ {:,.0f}",
+                                                                         'Cantidad':'{:,.0f}'}),
+                 use_container_width=True)
     st.plotly_chart(datos_por_md_grafico_dict[selected_service])
 
 
