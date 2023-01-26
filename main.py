@@ -297,7 +297,8 @@ if df is not None:
 
         total_monto = datos_por_md['Monto Total'].sum()
         total_cantidad = datos_por_md['Cantidad'].sum()
-        datos_por_md.loc['Total'] = [total_cantidad, total_monto]
+        #datos_por_md.loc['Total'] = [total_cantidad, total_monto]
+
 
         datos_por_md = datos_por_md.fillna(0)
         datos_por_md = datos_por_md.assign(Porcentaje_cantidad=lambda x: x['Cantidad'] / total_cantidad * 100)
@@ -310,67 +311,90 @@ if df is not None:
         datos_por_md_dict[servicio] = datos_por_md
         datos_por_md_grafico_dict[servicio] = fig
 
-    selected_service = st.selectbox("Elegí un servicio:", servicios)
+    st.sidebar.title("Menú")
+    selection = st.sidebar.selectbox(" ",["Resúmen General", "Datos por Servicio", "Section 3"])
+    if selection == 'Datos por Servicio':
 
-    st.header('Servicio de ' + selected_service)
-    st.write(
-        f'Durante el período evaluado, comprendido entre el {min_date} y el {max_date}, la clínica llevó a cabo'
-          ' un total de '
-    )
-    st.subheader('Servicio de ' + selected_service + ' por Especialidad')
-    st.dataframe(datos_especialidad_dict[selected_service].style.format({'Monto Total': "$ {:,.0f}",
-                                                                         'Porcentaje_cantidad': "{:,.2f} %",
-                                                                         'Cantidad': '{:,.0f}',
-                                                                         'Porcentaje_monto': "{:,.2f} %",
-                                                                         'Porcentaje': "{:,.2f} %",
-                                                                         'Media_estudio': "$ {:,.0f}",
-                                                                         'Cantidad':'{:,.0f}'}),
-                  use_container_width=True)
-    st.plotly_chart(datos_especialidad_grafico_dict[selected_service])
+        selected_service = st.selectbox("Elegí un servicio:", servicios)
 
-    st.subheader('Servicio de ' + selected_service + ' por Equipo')
-    st.dataframe(datos_por_equipo_dict[selected_service].style.format({'Monto Total': "$ {:,.0f}",
-                                                                         'Porcentaje_cantidad': "{:,.2f} %",
-                                                                         'Cantidad': '{:,.0f}',
-                                                                         'Porcentaje_monto': "{:,.2f} %",
-                                                                         'Porcentaje': "{:,.2f} %",
-                                                                         'Media_estudio': "$ {:,.0f}",
-                                                                         'Cantidad':'{:,.0f}'}),
-                 use_container_width=True)
-    st.plotly_chart(datos_por_equipo_grafico_dict[selected_service])
+        st.header('Servicio de ' + selected_service)
+        st.write(
+            f'Durante el período evaluado, comprendido entre el {min_date} y el {max_date}, la clínica llevó a cabo'
+              f' un total de '
+        )
+        st.subheader('Servicio de ' + selected_service + ' por Especialidad')
+        st.dataframe(datos_especialidad_dict[selected_service].style.format({'Monto Total': "$ {:,.0f}",
+                                                                             'Porcentaje_cantidad': "{:,.2f} %",
+                                                                             'Cantidad': '{:,.0f}',
+                                                                             'Porcentaje_monto': "{:,.2f} %",
+                                                                             'Porcentaje': "{:,.2f} %",
+                                                                             'Media_estudio': "$ {:,.0f}",
+                                                                             'Cantidad':'{:,.0f}'}),
+                      use_container_width=True)
 
-    st.subheader('Servicio de ' + selected_service + ' por Obra Social')
-    st.dataframe(datos_por_os_dict[selected_service].style.format({'Monto Total': "$ {:,.0f}",
-                                                                         'Porcentaje_cantidad': "{:,.2f} %",
-                                                                         'Cantidad': '{:,.0f}',
-                                                                         'Porcentaje_monto': "{:,.2f} %",
-                                                                         'Porcentaje': "{:,.2f} %",
-                                                                         'Media_estudio': "$ {:,.0f}",
-                                                                         'Cantidad':'{:,.0f}'}),
-                 use_container_width=True)
-    st.plotly_chart(datos_por_os_grafico_dict[selected_service])
+        if st.button('Export to Excel'):
+            datos_especialidad_dict[selected_service].to_excel('datos_por_especialidad.xlsx')
+
+        show_graph = st.checkbox('Mostrar gráfico', value=True, key=1)
+        if show_graph:
+            st.plotly_chart(datos_especialidad_grafico_dict[selected_service])
+
+        st.subheader('Servicio de ' + selected_service + ' por Equipo')
+        st.dataframe(datos_por_equipo_dict[selected_service].style.format({'Monto Total': "$ {:,.0f}",
+                                                                             'Porcentaje_cantidad': "{:,.2f} %",
+                                                                             'Cantidad': '{:,.0f}',
+                                                                             'Porcentaje_monto': "{:,.2f} %",
+                                                                             'Porcentaje': "{:,.2f} %",
+                                                                             'Media_estudio': "$ {:,.0f}",
+                                                                             'Cantidad':'{:,.0f}'}),
+                     use_container_width=True)
+        show_graph = st.checkbox('Mostrar gráfico', value=True, key=2)
+        if show_graph:
+            st.plotly_chart(datos_por_equipo_grafico_dict[selected_service])
+
+        st.subheader('Servicio de ' + selected_service + ' por Obra Social')
+        st.dataframe(datos_por_os_dict[selected_service].style.format({'Monto Total': "$ {:,.0f}",
+                                                                             'Porcentaje_cantidad': "{:,.2f} %",
+                                                                             'Cantidad': '{:,.0f}',
+                                                                             'Porcentaje_monto': "{:,.2f} %",
+                                                                             'Porcentaje': "{:,.2f} %",
+                                                                             'Media_estudio': "$ {:,.0f}",
+                                                                             'Cantidad':'{:,.0f}'}),
+                     use_container_width=True)
+        show_graph = st.checkbox('Mostrar gráfico', value=True, key=3)
+        if show_graph:
+            st.plotly_chart(datos_por_os_grafico_dict[selected_service])
 
 
-    st.subheader('Servicio de ' + selected_service + ' por Práctica')
-    st.dataframe(datos_por_practica_dict[selected_service].style.format({'Monto Total': "$ {:,.0f}",
-                                                                         'Porcentaje_cantidad': "{:,.2f} %",
-                                                                         'Cantidad': '{:,.0f}',
-                                                                         'Porcentaje_monto': "{:,.2f} %",
-                                                                         'Porcentaje': "{:,.2f} %",
-                                                                         'Media_estudio': "$ {:,.0f}",
-                                                                         'Cantidad':'{:,.0f}'}),
-                 use_container_width=True)
-    st.plotly_chart(datos_por_practica_figura_dict[selected_service])
+        st.subheader('Servicio de ' + selected_service + ' por Práctica')
+        st.dataframe(datos_por_practica_dict[selected_service].style.format({'Monto Total': "$ {:,.0f}",
+                                                                             'Porcentaje_cantidad': "{:,.2f} %",
+                                                                             'Cantidad': '{:,.0f}',
+                                                                             'Porcentaje_monto': "{:,.2f} %",
+                                                                             'Porcentaje': "{:,.2f} %",
+                                                                             'Media_estudio': "$ {:,.0f}",
+                                                                             'Cantidad':'{:,.0f}'}),
+                     use_container_width=True)
+        show_graph = st.checkbox('Mostrar gráfico', value=True, key=4)
+        if show_graph:
+            st.plotly_chart(datos_por_practica_figura_dict[selected_service])
 
-    st.subheader('Servicio de ' + selected_service + ' por Médico Derivante')
-    st.dataframe(datos_por_md_dict[selected_service].style.format({'Monto Total': "$ {:,.0f}",
-                                                                         'Porcentaje_cantidad': "{:,.2f} %",
-                                                                         'Cantidad': '{:,.0f}',
-                                                                         'Porcentaje_monto': "{:,.2f} %",
-                                                                         'Porcentaje': "{:,.2f} %",
-                                                                         'Media_estudio': "$ {:,.0f}",
-                                                                         'Cantidad':'{:,.0f}'}),
-                 use_container_width=True)
-    st.plotly_chart(datos_por_md_grafico_dict[selected_service])
+        st.subheader('Servicio de ' + selected_service + ' por Médico Derivante')
+        min_quantity = st.slider('Selecciona la mínima canidad de estudios enviados:',
+                                 min_value=int(datos_por_md_dict[selected_service]['Cantidad'].min()),
+                                 max_value=int(datos_por_md_dict[selected_service]['Cantidad'].max()),
+                                 value=10,
+                                 step=1)
+
+        st.dataframe(datos_por_md_dict[selected_service][datos_por_md_dict[selected_service]['Cantidad'] >= min_quantity].style.format({'Monto Total': "$ {:,.0f}",
+                                                                                                                                        'Porcentaje_cantidad': "{:,.2f} %",
+                                                                                                                                        'Cantidad': '{:,.0f}',
+                                                                                                                                        'Porcentaje_monto': "{:,.2f} %",
+                                                                                                                                        'Porcentaje': "{:,.2f} %",
+                                                                                                                                        'Media_estudio': "$ {:,.0f}",
+                                                                                                                                     'Cantidad':'{:,.0f}'}),use_container_width=True)
+        show_graph = st.checkbox('Mostrar gráfico', value=True, key=5)
+        if show_graph:
+            st.plotly_chart(datos_por_md_grafico_dict[selected_service])
 
 
