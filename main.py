@@ -332,8 +332,8 @@ if df is not None:
                                                                              'Cantidad':'{:,.0f}'}),
                       use_container_width=True)
 
-        if st.button('Export to Excel'):
-            datos_especialidad_dict[selected_service].to_excel('datos_por_especialidad.xlsx')
+        if st.button('Exportar a Excel', key=10):
+            datos_especialidad_dict[selected_service].to_excel(f'datos_por_especialidad_{selected_service}.xlsx')
 
         show_graph = st.checkbox('Mostrar gráfico', value=True, key=1)
         if show_graph:
@@ -348,6 +348,10 @@ if df is not None:
                                                                              'Media_estudio': "$ {:,.0f}",
                                                                              'Cantidad':'{:,.0f}'}),
                      use_container_width=True)
+
+        if st.button('Exportar a Excel', key=20):
+            datos_por_equipo_dict[selected_service].to_excel(f'datos_por_equipo_{selected_service}.xlsx')
+
         show_graph = st.checkbox('Mostrar gráfico', value=True, key=2)
         if show_graph:
             st.plotly_chart(datos_por_equipo_grafico_dict[selected_service])
@@ -361,6 +365,9 @@ if df is not None:
                                                                              'Media_estudio': "$ {:,.0f}",
                                                                              'Cantidad':'{:,.0f}'}),
                      use_container_width=True)
+        if st.button('Exportar a Excel', key=30):
+            datos_por_os_dict[selected_service].to_excel(f'datos_por_os{selected_service}.xlsx')
+
         show_graph = st.checkbox('Mostrar gráfico', value=True, key=3)
         if show_graph:
             st.plotly_chart(datos_por_os_grafico_dict[selected_service])
@@ -375,7 +382,12 @@ if df is not None:
                                                                              'Media_estudio': "$ {:,.0f}",
                                                                              'Cantidad':'{:,.0f}'}),
                      use_container_width=True)
+        if st.button('Exportar a Excel', key=40):
+            datos_por_practica_dict[selected_service].to_excel(f'datos_por_practica_{selected_service}.xlsx')
+
         show_graph = st.checkbox('Mostrar gráfico', value=True, key=4)
+
+
         if show_graph:
             st.plotly_chart(datos_por_practica_figura_dict[selected_service])
 
@@ -394,6 +406,10 @@ if df is not None:
                                                                                                                                         'Media_estudio': "$ {:,.0f}",
                                                                                                                                      'Cantidad':'{:,.0f}'}),use_container_width=True)
         show_graph = st.checkbox('Mostrar gráfico', value=True, key=5)
+
+        if st.button('Exportar a Excel', key=50):
+            datos_por_md_dict[selected_service].to_excel(f'datos_por_md_{selected_service}.xlsx')
+
         if show_graph:
             st.plotly_chart(datos_por_md_grafico_dict[selected_service])
 
