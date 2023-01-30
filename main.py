@@ -97,8 +97,8 @@ if df is not None:
     grafico_fac_por_centro_pie = go.Figure(data=[go.Pie(labels=fac_por_centro.index, values=fac_por_centro['Porcentaje'],
                                 title='Facturación por Centro', marker=dict(colors=['#16c2d5', '#10217d', '#527c88', '#d7baad', '#6d4dd3', '#f46f74', '#9c94dc']))])
 
-
-    fac_por_centro.loc['Total'] = total_facturacion
+    total_porcentaje = 100
+    fac_por_centro.loc['Total'] = [total_facturacion, total_porcentaje]
 
     #facturacion por servicio
     fac_por_servicio = df.groupby(['Servicio'])['Monto Total'].sum().astype(int).sort_values(
@@ -127,7 +127,7 @@ if df is not None:
                      title='Facturación por Servicio',
                      marker=dict(colors=['#16c2d5', '#10217d', '#527c88', '#d7baad', '#6d4dd3', '#f46f74', '#9c94dc']))])
 
-    fac_por_servicio.loc['Total'] = total_facturacion
+    fac_por_servicio.loc['Total'] = [total_facturacion, total_porcentaje]
 
     #facturacion por especialidad
     fac_por_especialidad = df.groupby(['Especialidad'])['Monto Total'].sum().astype(int).sort_values(
@@ -150,7 +150,7 @@ if df is not None:
         yaxis_title='Monto Total'
     )
 
-    fac_por_especialidad.loc['Total'] = total_facturacion
+    fac_por_especialidad.loc['Total'] = [total_facturacion, total_porcentaje]
 
     for servicio in servicios:
         df_ser = df.loc[df['Servicio'] == servicio]
@@ -405,10 +405,6 @@ if df is not None:
         selected_service = st.selectbox("Elegí un servicio:", servicios)
 
         st.header('Servicio de ' + selected_service)
-        st.write(
-            f'Durante el período evaluado, comprendido entre el {min_date} y el {max_date}, la clínica llevó a cabo'
-              f' un total de '
-        )
         st.subheader('Servicio de ' + selected_service + ' por Especialidad')
         st.dataframe(datos_especialidad_dict[selected_service].style.format({'Monto Total': "$ {:,.0f}",
                                                                              'Porcentaje_cantidad': "{:,.2f} %",
@@ -489,6 +485,7 @@ if df is not None:
 
 
         if st.button('Exportar a Excel', key=50):
+            datos_por_md_dict[selected_service] = datos_por_md_dict[selected_service][datos_por_md_dict[selected_service]['Cantidad'] >= min_quantity]
             datos_por_md_dict[selected_service].to_excel(f'datos_por_md_{selected_service}.xlsx')
 
 
@@ -498,21 +495,42 @@ if df is not None:
         st.header('Estadísticas generales')
         st.write(f'Estas estadísticas generales abarcan desde el {min_date} hasta el {max_date}')
         st.subheader('Facturación por Centro')
-        st.dataframe(fac_por_centro, use_container_width=True)
+        st.dataframe(fac_por_centro.style.format({'Monto Total': "$ {:,.0f}",
+                                                                             'Porcentaje_cantidad': "{:,.2f} %",
+                                                                             'Cantidad': '{:,.0f}',
+                                                                             'Porcentaje_monto': "{:,.2f} %",
+                                                                             'Porcentaje': "{:,.2f} %",
+                                                                             'Media_estudio': "$ {:,.0f}",
+                                                                             'Cantidad':'{:,.0f}'}),
+                     use_container_width=True)
         if st.button('Exportar a Excel', key=500):
             fac_por_centro.to_excel('fac_po_centro.xlsx')
         st.plotly_chart(grafico_fac_por_centro)
         st.plotly_chart(grafico_fac_por_centro_pie)
         st.markdown('---')
         st.subheader('Facturación por Servicio')
-        st.dataframe(fac_por_servicio, use_container_width=True)
+        st.dataframe(fac_por_servicio.style.format({'Monto Total': "$ {:,.0f}",
+                                                                             'Porcentaje_cantidad': "{:,.2f} %",
+                                                                             'Cantidad': '{:,.0f}',
+                                                                             'Porcentaje_monto': "{:,.2f} %",
+                                                                             'Porcentaje': "{:,.2f} %",
+                                                                             'Media_estudio': "$ {:,.0f}",
+                                                                             'Cantidad':'{:,.0f}'}),
+                     use_container_width=True)
         if st.button('Exportar a Excel', key=600):
             fac_por_servicio.to_excel('fac_por_servicio.xlsx')
         st.plotly_chart(grafico_fac_por_servicio)
         st.plotly_chart(grafico_fac_por_servicio_pie)
         st.markdown('---')
         st.subheader('Facturación por Especialidad')
-        st.dataframe(fac_por_especialidad, use_container_width=True)
+        st.dataframe(fac_por_especialidad.style.format({'Monto Total': "$ {:,.0f}",
+                                                                             'Porcentaje_cantidad': "{:,.2f} %",
+                                                                             'Cantidad': '{:,.0f}',
+                                                                             'Porcentaje_monto': "{:,.2f} %",
+                                                                             'Porcentaje': "{:,.2f} %",
+                                                                             'Media_estudio': "$ {:,.0f}",
+                                                                             'Cantidad':'{:,.0f}'}),
+                     use_container_width=True)
         if st.button('Exportar a Excel', key=700):
             fac_por_especialidad.to_excel('fac_por_especialidad.xlsx')
         st.plotly_chart(grafico_fac_por_especialidad)
