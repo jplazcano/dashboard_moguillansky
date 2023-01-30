@@ -398,9 +398,72 @@ if df is not None:
         datos_por_md_grafico_dict[servicio] = fig
 
 
-    selection = st.sidebar.selectbox(" ",["Estadísticas Generales", "Estadísticas por Servicio", "Section 3"])
+
+
+
+#SERVICIO MAMAS
+
+    estudios_mamas = ['ECOGRAFIA MAMARIA UNI O BILATERAL', 'PUNCION BIOPSIA MAMARIA GUIADA BAJO ECOGRAFIA', 'MAMOGRAFÍA UNILATERAL',
+                      'TECNICA DE EKLUND Bilateral', 'MAMOGRAFIA BILATERAL', 'MAMOGRAFÍA PROYECCIÓN AXILAR',
+                      'Estereotaxia Digital Prona, con Sistema de Biopsias con Vacio y Aspiración continua Unilateral ( SUROS)',
+                      'TECNICA DE EKLUND Unilateral', 'DOPPLER MAMARIO', 'RM MAMARIA', 'RM MAMARIA BILATERAL']
+
+
+    df_mamas = df[df['Practica'].isin(estudios_mamas)]
+    df_mamas = df_mamas.groupby('Practica')['Cantidad', 'Monto Total'].sum().astype(int).sort_values(by='Monto Total', ascending=False)
+    cant_fac_serv_mamas = df_mamas.groupby('Practica')
+
+
+    total_monto_mamas = df_mamas['Monto Total'].sum()
+    total_cantidad_mamas = df_mamas['Cantidad'].sum()
+    df_mamas.loc['Total'] = [total_cantidad_mamas, total_monto_mamas]
+
+    fig_mamas = make_subplots(specs=[[{"secondary_y": True}]])
+
+    fig_mamas.add_trace(go.Bar(x=df_mamas.iloc[:15].index,
+                         y=cantidad_por_os['Cantidad'],
+                         name='Cantidad',
+                         marker_color='#176ba0',
+                         opacity=1,
+                         width=0.3,
+                         offset=-0.3),
+                  secondary_y=False)
+
+    fig.add_trace(go.Bar(x=monto_por_os.iloc[:15].index,
+                         y=monto_por_os['Monto Total'],
+                         name='Monto ($)',
+                         marker_color='#1de4bd',
+                         opacity=1,
+                         width=0.3,
+                         offset=0),
+                  secondary_y=True)
+
+    fig.update_layout(
+        title='Cantidad y monto facturado por Obra Social -  Servicio de ' + str(servicio) + ' (top 15)')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    selection = st.sidebar.selectbox(" ",["Estadísticas Generales", "Estadísticas por Servicio", "Servicio de Mamas"])
 
     if selection == 'Estadísticas por Servicio':
+        st.write(f'Estas estadísticas generales abarcan desde el {min_date} hasta el {max_date}')
 
         selected_service = st.selectbox("Elegí un servicio:", servicios)
 
@@ -493,7 +556,7 @@ if df is not None:
 
     if selection == 'Estadísticas Generales':
         st.header('Estadísticas generales')
-        st.write(f'Estas estadísticas generales abarcan desde el {min_date} hasta el {max_date}')
+        st.write(f'Estas estadísticas abarcan desde el {min_date} hasta el {max_date}')
         st.subheader('Facturación por Centro')
         st.dataframe(fac_por_centro.style.format({'Monto Total': "$ {:,.0f}",
                                                                              'Porcentaje_cantidad': "{:,.2f} %",
@@ -534,6 +597,18 @@ if df is not None:
         if st.button('Exportar a Excel', key=700):
             fac_por_especialidad.to_excel('fac_por_especialidad.xlsx')
         st.plotly_chart(grafico_fac_por_especialidad)
+
+    if selection == 'Servicio de Mamas':
+        st.header("Servicio de Mamas")
+        st.write(f'Estas estadísticas abarcan desde el {min_date} hasta el {max_date}')
+        st.dataframe(df_mamas.style.format({'Monto Total': "$ {:,.0f}",
+                                                                             'Porcentaje_cantidad': "{:,.2f} %",
+                                                                             'Cantidad': '{:,.0f}',
+                                                                             'Porcentaje_monto': "{:,.2f} %",
+                                                                             'Porcentaje': "{:,.2f} %",
+                                                                             'Media_estudio': "$ {:,.0f}",
+                                                                             'Cantidad':'{:,.0f}'}),
+                     use_container_width=True)
 
 
 
