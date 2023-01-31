@@ -520,6 +520,41 @@ if df is not None:
 
 
 
+#Grupo CIDEM
+    grupo_cidem = ['AGHETONI GABRIELA', 'AGUILAR ZAPATA JUSTO', 'AGUIRRE EDGARD ADRIAN', 'AODASSIO MARIA SOLEDAD',
+                   'BEGA GABRIEL', 'BOCCIO EDUARDO', 'BURGOS LUIS', 'CABRERA LORENA SOLEDAD',
+                   'CAMACHO MARIELA', 'CASTELLO PAULINA', 'CENOZ ANA MARIA', 'CONCINA ANGELES',
+                   'CURIONI MARCELA', 'DIBLASI ROMINA', 'DOMINGUEZ MARCELO', 'DURANDO RICARDO',
+                   'ENCINA SILVIA ROXANA', 'FIORENTINI NIDIA', 'GONZALEZ LUCIA', 'KREMER ANNA',
+                   'KREMER GABRIELA', 'KUGLER MARIELA', 'LOSILLA MARIA VANESA', 'MARTINEZ LUQUE EMILIO',
+                   'MEDINA MARIA ISABEL', 'MERONIUC GRACIANA', 'MIELE FABIANA', 'MOLINA MARIEL',
+                   'NIEVAS JACQUELINE', 'NUCCETELLI MARIA GRACIANA', 'PARODI GUILLERMO', 'PEREZ GUILLERMO'                                                       'PUGLISI LUCIA',
+                   'RABINOWICZ SERGIO', 'RUBIOLO MARINA', 'SANCHEZ YESICA ANABEL',
+                   'SILVEYRA PAOLA', 'STRAUSS EVELINA', 'TRUZZI LAURA', 'VILLANUEVA CABALLERO VICTOR',
+                   'ZARATE MARIA NOELIA']
+    medicos_derivanted_cidem = df_sin_insumos[df_sin_insumos['Medico Derivante'].isin(grupo_cidem)]
+
+    tabla_cidem = medicos_derivanted_cidem.groupby(['Medico Derivante', 'Especialidad', 'Obra Social']).agg(
+        {'Cantidad': 'sum', 'Monto Total': 'sum'}).sort_values(by=['Medico Derivante', 'Monto Total'],
+                                                               ascending=[True, False])
+    tabla_cidem['Monto Total'] = tabla_cidem['Monto Total'].apply('$ {:,.0f}'.format)
+    tabla_cidem = tabla_cidem.reset_index()
+
+    total_fac_cidem = medicos_derivanted_cidem['Monto Total'].sum()
+    total_cant_cidem = medicos_derivanted_cidem['Cantidad'].sum()
+
+    total_fac_cidem_especialidad = medicos_derivanted_cidem.groupby(['Especialidad']).agg(
+        {'Cantidad': 'sum', 'Monto Total': 'sum'}).sort_values(by='Monto Total', ascending=False)
+
+    total_por_medico_cidem = medicos_derivanted_cidem.groupby(['Medico Derivante', 'Especialidad', 'Obra Social']).agg(
+        {'Cantidad': 'sum', 'Monto Total': 'sum'}).sort_values(by='Monto Total', ascending=False)
+
+    total_fac_cidem_especialidad['Monto Total'] = total_fac_cidem_especialidad['Monto Total'].apply('$ {:,.0f}'.format)
+    total_fac_cidem_especialidad['Cantidad'] = total_fac_cidem_especialidad['Cantidad'].apply('{:,.0f}'.format)
+
+    total_fac_cidem_especialidad.loc['Total'] = ['{:,.0f}'.format(total_cant_ctn), '$ {:,.0f}'.format(total_fac_ctn)]
+
+
 
 
 
@@ -703,9 +738,6 @@ if df is not None:
             options=['Buscador General por Nombre', 'CTN', 'CIDEM']
         )
         if seleccion2 == 'Buscador General por Nombre':
-            st.write(
-                'Con el siguiente buscador se obtiene la cantidad de estudios y monto total que envió el médico buscado dividido'
-                'por la especialidad y la obra social')
 
             medico_derivante = st.multiselect("Buscar por Medico Derivante:",
                                               pd.Series(df_sin_insumos['Medico Derivante'].unique()).sort_values())
@@ -722,11 +754,15 @@ if df is not None:
 
             grouped_df['Monto Total'] = grouped_df['Monto Total'].apply('$ {:,.0f}'.format)
 
-            st.dataframe(grouped_df)
+            st.dataframe(grouped_df, use_container_width=True)
+            if st.button('Exportar a Excel', key=80000):
+                grouped_df.to_excel('derivantes.xlsx')
 
         if seleccion2 == 'CTN':
             st.subheader('Grupo CTN por Especialidad')
-            st.dataframe(total_fac_ctn_especialidad)
+            st.dataframe(total_fac_ctn_especialidad, use_container_width=True)
+            if st.button('Exportar a Excel', key=70000):
+                total_fac_ctn_especialidad.to_excel('ctnTotal.xlsx')
             st.subheader('Buscador:')
 
             medico_derivante_ctn = st.multiselect("Buscar por Medico Derivante:",
@@ -746,7 +782,37 @@ if df is not None:
 
             grouped_df_ctn['Monto Total'] = grouped_df_ctn['Monto Total'].apply('$ {:,.0f}'.format)
 
-            st.dataframe(grouped_df_ctn)
+            st.dataframe(grouped_df_ctn, use_container_width=True)
+            if st.button('Exportar a Excel', key=60000):
+                grouped_df_ctn.to_excel('ctn.xlsx')
+
+        if seleccion2 == 'CIDEM':
+            st.subheader('Grupo CIDEM por Especialidad')
+            st.dataframe(total_fac_cidem_especialidad, use_container_width=True)
+            if st.button('Exportar a Excel', key=700000):
+                total_fac_cidem_especialidad.to_excel('cidemTotal.xlsx')
+            st.subheader('Buscador:')
+
+            medico_derivante_cidem = st.multiselect("Buscar por Medico Derivante:",
+                                                  pd.Series(tabla_cidem['Medico Derivante'].unique()).sort_values(),
+                                                  default=pd.Series(
+                                                      tabla_cidem['Medico Derivante'].unique()).sort_values())
+            especialidad3 = st.multiselect("Buscar por Especialidad:",
+                                           pd.Series(df_sin_insumos['Especialidad'].unique()).sort_values(),
+                                           default=pd.Series(df_sin_insumos['Especialidad'].unique()).sort_values())
+
+            filtered_df3 = df_sin_insumos[(df_sin_insumos['Medico Derivante'].isin(medico_derivante_cidem)) & (
+                df_sin_insumos['Especialidad'].isin(especialidad3))]
+
+            grouped_df_cidem = filtered_df3.groupby(['Medico Derivante', 'Especialidad']).agg(
+                {'Cantidad': 'sum', 'Monto Total': 'sum'}).sort_values(
+                by=['Medico Derivante', 'Especialidad', 'Monto Total'], ascending=[True, True, False])
+
+            grouped_df_cidem['Monto Total'] = grouped_df_cidem['Monto Total'].apply('$ {:,.0f}'.format)
+
+            st.dataframe(grouped_df_cidem, use_container_width=True)
+            if st.button('Exportar a Excel', key=60000):
+                grouped_df_cidem.to_excel('cidem.xlsx')
 
 
 
