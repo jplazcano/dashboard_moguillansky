@@ -5,9 +5,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
+from streamlit_option_menu import option_menu
 from matplotlib.pyplot import *
 
-st.set_page_config(page_title='JP Analytics', page_icon=None, initial_sidebar_state="auto", menu_items=None)
+st.set_page_config(page_title='Dashboard MEDXXI', page_icon=None, initial_sidebar_state="auto", menu_items=None)
 
 
 # TITULO / INSTRUCCIONES
@@ -188,9 +189,9 @@ if df is not None:
             Porcentaje=lambda x: x['Monto Total'] / total_monto * 100).round(2)
 
         monto_por_especialidad = monto_por_especialidad.assign(
-            Media=lambda x: x['Monto Total'] / x['Cantidad'])
+            Media_estudio=lambda x: x['Monto Total'] / x['Cantidad'])
         monto_por_especialidad = monto_por_especialidad.fillna(0)
-        monto_por_especialidad['Media'] = monto_por_especialidad['Media'].astype(int)
+        monto_por_especialidad['Media_estudio'] = monto_por_especialidad['Media_estudio'].astype(int)
 
         datos_especialidad_dict[servicio] = monto_por_especialidad
         datos_especialidad_grafico_dict[servicio] = fig
@@ -403,25 +404,36 @@ if df is not None:
 
 #SERVICIO MAMAS
 
-    estudios_mamas = ['ECOGRAFIA MAMARIA UNI O BILATERAL', 'PUNCION BIOPSIA MAMARIA GUIADA BAJO ECOGRAFIA', 'MAMOGRAFÍA UNILATERAL',
-                      'TECNICA DE EKLUND Bilateral', 'MAMOGRAFIA BILATERAL', 'MAMOGRAFÍA PROYECCIÓN AXILAR',
-                      'Estereotaxia Digital Prona, con Sistema de Biopsias con Vacio y Aspiración continua Unilateral ( SUROS)',
-                      'TECNICA DE EKLUND Unilateral', 'DOPPLER MAMARIO', 'RM MAMARIA', 'RM MAMARIA BILATERAL']
+    estudios_mamas = ['COLOCACIÓN DE CLIP INTRATUMORAL', 'DOPPLER GINECOLOGICO', 'DOPPLER MAMARIO',
+                      'ECOGRAFIA MAMARIA UNI O BILATERAL', 'HISTEROSALPINGOGRAFIA VIRTUAL BAJO TCM',
+                      'LOCALIZACION Y MARCACION MAMOGRAFICA', 'MAGNIFICACION', 'MAGNIFICACION BILATERAL',
+                      'MAMOGRAFIA BILATERAL', 'MAMOGRAFÍA PROYECCIÓN AXILAR', 'MAMOGRAFÍA UNILATERAL',
+                      'Marcación Prequirurgica de Mama (Ecografia)',
+                      'Marcación Prequirurgica de Mama (Mamografia)',
+                      'PUNCION BIOPSIA MAMARIA ASPIRATIVA GUIADA BAJO ECO',
+                      'PUNCION BIOPSIA MAMARIA GUIADA BAJO ECOGRAFIA',
+                      'PUNCION MAMARIA BAJO RMN CON SISTEMA DE VACIO', 'RM MAMARIA', 'RM MAMARIA BILATERAL',
+                      'RX PIEZA OPERATORIA (Mamografia)', 'TAC MAMARIA', 'TECNICA DE EKLUND Bilateral',
+                      'TECNICA DE EKLUND Unilateral']
 
 
     df_mamas = df[df['Practica'].isin(estudios_mamas)]
-    df_mamas = df_mamas.groupby('Practica')['Cantidad', 'Monto Total'].sum().astype(int).sort_values(by='Monto Total', ascending=False)
-    cant_fac_serv_mamas = df_mamas.groupby('Practica')
+    df_mamas = df_mamas.groupby('Servicio')['Cantidad', 'Monto Total'].sum().astype(int).sort_values(by='Monto Total', ascending=False)
 
 
     total_monto_mamas = df_mamas['Monto Total'].sum()
     total_cantidad_mamas = df_mamas['Cantidad'].sum()
-    df_mamas.loc['Total'] = [total_cantidad_mamas, total_monto_mamas]
+
+    df_mamas = df_mamas.assign(Porcentaje_cantidad=lambda x: x['Cantidad'] / total_cantidad_mamas * 100)
+    df_mamas = df_mamas.assign(Porcentaje_monto=lambda x: x['Monto Total'] / total_monto_mamas * 100)
+
+    df_mamas2 =  df[df['Practica'].isin(estudios_mamas)]
+    df_mamas2 = df_mamas2.groupby('Practica')['Cantidad', 'Monto Total'].sum().astype(int).sort_values(by='Monto Total', ascending=False)
 
     fig_mamas = make_subplots(specs=[[{"secondary_y": True}]])
 
-    fig_mamas.add_trace(go.Bar(x=df_mamas.iloc[:15].index,
-                         y=cantidad_por_os['Cantidad'],
+    fig_mamas.add_trace(go.Bar(x=df_mamas.index,
+                         y=df_mamas['Cantidad'],
                          name='Cantidad',
                          marker_color='#176ba0',
                          opacity=1,
@@ -429,8 +441,8 @@ if df is not None:
                          offset=-0.3),
                   secondary_y=False)
 
-    fig.add_trace(go.Bar(x=monto_por_os.iloc[:15].index,
-                         y=monto_por_os['Monto Total'],
+    fig_mamas.add_trace(go.Bar(x=df_mamas.index,
+                         y=df_mamas['Monto Total'],
                          name='Monto ($)',
                          marker_color='#1de4bd',
                          opacity=1,
@@ -438,8 +450,73 @@ if df is not None:
                          offset=0),
                   secondary_y=True)
 
-    fig.update_layout(
-        title='Cantidad y monto facturado por Obra Social -  Servicio de ' + str(servicio) + ' (top 15)')
+    fig_mamas.update_layout(
+        title='Cantidad y monto facturado Servicio de Mamas')
+
+    fig_mamas2 = make_subplots(specs=[[{"secondary_y": True}]])
+
+    fig_mamas2.add_trace(go.Bar(x=df_mamas2.index,
+                               y=df_mamas2['Cantidad'],
+                               name='Cantidad',
+                               marker_color='#176ba0',
+                               opacity=1,
+                               width=0.3,
+                               offset=-0.3),
+                        secondary_y=False)
+
+    fig_mamas2.add_trace(go.Bar(x=df_mamas2.index,
+                               y=df_mamas2['Monto Total'],
+                               name='Monto ($)',
+                               marker_color='#1de4bd',
+                               opacity=1,
+                               width=0.3,
+                               offset=0),
+                        secondary_y=True)
+
+    fig_mamas2.update_layout(
+        title='Cantidad y monto facturado Servicio de Mamas por Práctica')
+
+
+    df_mamas.loc['Total'] = [total_cantidad_mamas, total_monto_mamas, total_porcentaje, total_porcentaje]
+    df_mamas2.loc['Total'] = [total_cantidad_mamas, total_monto_mamas]
+
+    df_mamas2 = df_mamas2.assign(Porcentaje_cantidad=lambda x: x['Cantidad'] / total_cantidad_mamas * 100)
+    df_mamas2 = df_mamas2.assign(Porcentaje_monto=lambda x: x['Monto Total'] / total_monto_mamas * 100)
+
+
+
+
+
+
+# Grupo CTN
+    # Grupo CTN
+    medicos_ctn = df_sin_insumos[df_sin_insumos['Medico Derivante'].isin([
+        'BARROSO DANIEL', 'BONFIGLIO PABLO', 'BONIFIGLIO PABLO',
+        'DUARTE NICOLAS', 'DUARTE NICOLAS  S.', 'ENTRENA CARLOS',
+        'ENTRENA NICOLAS', 'ESCOBAR DARIO E.', 'HERRERO VERONICA',
+        'KREITMAN CLAUDIA', 'MALETTI FERNANDO', 'MANTILARO ESTEBAN',
+        'SOLSONA SEBASTIAN'
+    ])]
+
+    tabla_ctn = medicos_ctn.groupby(['Medico Derivante', 'Especialidad', 'Obra Social']).agg(
+        {'Cantidad': 'sum', 'Monto Total': 'sum'}).sort_values(by=['Medico Derivante', 'Monto Total'],
+                                                               ascending=[True, False])
+    tabla_ctn['Monto Total'] = tabla_ctn['Monto Total'].apply('$ {:,.0f}'.format)
+    tabla_ctn = tabla_ctn.reset_index()
+
+    total_fac_ctn = medicos_ctn['Monto Total'].sum()
+    total_cant_ctn = medicos_ctn['Cantidad'].sum()
+
+    total_fac_ctn_especialidad = medicos_ctn.groupby(['Especialidad']).agg(
+        {'Cantidad': 'sum', 'Monto Total': 'sum'}).sort_values(by='Monto Total', ascending=False)
+
+    total_por_medico_ctn = medicos_ctn.groupby(['Medico Derivante', 'Especialidad', 'Obra Social']).agg(
+        {'Cantidad': 'sum', 'Monto Total': 'sum'}).sort_values(by='Monto Total', ascending=False)
+
+    total_fac_ctn_especialidad['Monto Total'] = total_fac_ctn_especialidad['Monto Total'].apply('$ {:,.0f}'.format)
+    total_fac_ctn_especialidad['Cantidad'] = total_fac_ctn_especialidad['Cantidad'].apply('{:,.0f}'.format)
+
+    total_fac_ctn_especialidad.loc['Total'] = ['{:,.0f}'.format(total_cant_ctn), '$ {:,.0f}'.format(total_fac_ctn)]
 
 
 
@@ -457,10 +534,7 @@ if df is not None:
 
 
 
-
-
-
-    selection = st.sidebar.selectbox(" ",["Estadísticas Generales", "Estadísticas por Servicio", "Servicio de Mamas"])
+    selection = st.sidebar.selectbox(" ",["Estadísticas Generales", "Estadísticas por Servicio", "Servicio de Mamas", "Médicos Derivantes"])
 
     if selection == 'Estadísticas por Servicio':
         st.write(f'Estas estadísticas generales abarcan desde el {min_date} hasta el {max_date}')
@@ -601,6 +675,7 @@ if df is not None:
     if selection == 'Servicio de Mamas':
         st.header("Servicio de Mamas")
         st.write(f'Estas estadísticas abarcan desde el {min_date} hasta el {max_date}')
+        st.subheader("Servicio de Mamas por Servicio")
         st.dataframe(df_mamas.style.format({'Monto Total': "$ {:,.0f}",
                                                                              'Porcentaje_cantidad': "{:,.2f} %",
                                                                              'Cantidad': '{:,.0f}',
@@ -609,6 +684,70 @@ if df is not None:
                                                                              'Media_estudio': "$ {:,.0f}",
                                                                              'Cantidad':'{:,.0f}'}),
                      use_container_width=True)
+        st.plotly_chart(fig_mamas)
+        st.subheader("Servicio de Mamas por Práctica")
+        st.dataframe(df_mamas2.style.format({'Monto Total': "$ {:,.0f}",
+                                                                             'Porcentaje_cantidad': "{:,.2f} %",
+                                                                             'Cantidad': '{:,.0f}',
+                                                                             'Porcentaje_monto': "{:,.2f} %",
+                                                                             'Porcentaje': "{:,.2f} %",
+                                                                             'Media_estudio': "$ {:,.0f}",
+                                                                             'Cantidad':'{:,.0f}'}),
+                     use_container_width=True)
+
+        st.plotly_chart(fig_mamas2)
+
+    if selection == 'Médicos Derivantes':
+        seleccion2 = option_menu(
+            menu_title='',
+            options=['Buscador General por Nombre', 'CTN', 'CIDEM']
+        )
+        if seleccion2 == 'Buscador General por Nombre':
+            st.write(
+                'Con el siguiente buscador se obtiene la cantidad de estudios y monto total que envió el médico buscado dividido'
+                'por la especialidad y la obra social')
+
+            medico_derivante = st.multiselect("Buscar por Medico Derivante:",
+                                              pd.Series(df_sin_insumos['Medico Derivante'].unique()).sort_values())
+            especialidad = st.multiselect("Buscar por Especialidad:",
+                                          pd.Series(df_sin_insumos['Especialidad'].unique()).sort_values(),
+                                          default=pd.Series(df_sin_insumos['Especialidad'].unique()).sort_values())
+
+            filtered_df = df_sin_insumos[(df_sin_insumos['Medico Derivante'].isin(medico_derivante)) & (
+                df_sin_insumos['Especialidad'].isin(especialidad))]
+
+            grouped_df = filtered_df.groupby(['Especialidad', 'Obra Social']).agg(
+                {'Cantidad': 'sum', 'Monto Total': 'sum'}).sort_values(
+                by=['Especialidad', 'Monto Total'], ascending=[True, False])
+
+            grouped_df['Monto Total'] = grouped_df['Monto Total'].apply('$ {:,.0f}'.format)
+
+            st.dataframe(grouped_df)
+
+        if seleccion2 == 'CTN':
+            st.subheader('Grupo CTN por Especialidad')
+            st.dataframe(total_fac_ctn_especialidad)
+            st.subheader('Buscador:')
+
+            medico_derivante_ctn = st.multiselect("Buscar por Medico Derivante:",
+                                                  pd.Series(tabla_ctn['Medico Derivante'].unique()).sort_values(),
+                                                  default=pd.Series(
+                                                      tabla_ctn['Medico Derivante'].unique()).sort_values())
+            especialidad2 = st.multiselect("Buscar por Especialidad:",
+                                           pd.Series(df_sin_insumos['Especialidad'].unique()).sort_values(),
+                                           default=pd.Series(df_sin_insumos['Especialidad'].unique()).sort_values())
+
+            filtered_df2 = df_sin_insumos[(df_sin_insumos['Medico Derivante'].isin(medico_derivante_ctn)) & (
+                df_sin_insumos['Especialidad'].isin(especialidad2))]
+
+            grouped_df_ctn = filtered_df2.groupby(['Medico Derivante', 'Especialidad']).agg(
+                {'Cantidad': 'sum', 'Monto Total': 'sum'}).sort_values(
+                by=['Medico Derivante', 'Especialidad', 'Monto Total'], ascending=[True, True, False])
+
+            grouped_df_ctn['Monto Total'] = grouped_df_ctn['Monto Total'].apply('$ {:,.0f}'.format)
+
+            st.dataframe(grouped_df_ctn)
+
 
 
 
