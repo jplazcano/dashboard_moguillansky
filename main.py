@@ -482,6 +482,8 @@ if df is not None:
 
     df_mamas2 = df_mamas2.assign(Porcentaje_cantidad=lambda x: x['Cantidad'] / total_cantidad_mamas * 100)
     df_mamas2 = df_mamas2.assign(Porcentaje_monto=lambda x: x['Monto Total'] / total_monto_mamas * 100)
+    df_mamas2 = df_mamas2.assign(Ratio=lambda x: x['Porcentaje_monto'] / x['Porcentaje_cantidad'])
+    df_mamas2 =  df_mamas2.assign(Media_estudio=lambda x: x['Monto Total'] / x['Cantidad'])
 
 
 
