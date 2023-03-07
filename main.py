@@ -153,6 +153,30 @@ if df is not None:
 
     fac_por_especialidad.loc['Total'] = [total_facturacion, total_porcentaje]
 
+    # facturacion por os
+    fac_por_os = df.groupby(['Obra Social'])['Monto Total'].sum().astype(int).sort_values(
+        ascending=False)
+
+    fac_por_os = fac_por_os.to_frame().assign(
+        Porcentaje=lambda x: x['Monto Total'] / total_facturacion * 100).round(2)
+
+    grafico_fac_por_os = make_subplots(rows=1, cols=1)
+    grafico_fac_por_os.add_trace(
+        go.Bar(x=fac_por_os.iloc[:15].index,
+               y=fac_por_os['Monto Total'],
+               marker=dict(color='#16c2d5'),
+               text=fac_por_os['Monto Total'].apply(lambda x: "<b>${:,.0f}<b>".format(x)),
+               textposition='auto'))
+
+    grafico_fac_por_os.update_layout(
+        title='Facturación por Obra Social',
+        xaxis_title='Centro',
+        yaxis_title='Monto Total'
+    )
+
+    fac_por_os.loc['Total'] = [total_facturacion, total_porcentaje]
+
+
     for servicio in servicios:
         df_ser = df.loc[df['Servicio'] == servicio]
         monto_por_especialidad = df_ser.groupby('Especialidad')['Cantidad', 'Monto Total'].sum().astype(
@@ -709,6 +733,21 @@ if df is not None:
             fac_por_especialidad.to_excel('fac_por_especialidad.xlsx')
         st.plotly_chart(grafico_fac_por_especialidad)
 
+        st.markdown('---')
+        st.subheader('Facturación por Obra Social')
+        st.dataframe(fac_por_os.style.format({'Monto Total': "$ {:,.0f}",
+                                                        'Porcentaje_cantidad': "{:,.2f} %",
+                                                        'Cantidad': '{:,.0f}',
+                                                        'Porcentaje_monto': "{:,.2f} %",
+                                                        'Porcentaje': "{:,.2f} %",
+                                                        'Media_estudio': "$ {:,.0f}",
+                                                        'Cantidad': '{:,.0f}'}),
+                     use_container_width=True)
+        if st.button('Exportar a Excel', key=7500):
+            fac_por_os.to_excel('fac_por_os.xlsx')
+        st.plotly_chart(grafico_fac_por_os)
+
+
     if selection == 'Servicio de Mamas':
         st.header("Servicio de Mamas")
         st.write(f'Estas estadísticas abarcan desde el {min_date} hasta el {max_date}')
@@ -815,7 +854,6 @@ if df is not None:
             st.dataframe(grouped_df_cidem, use_container_width=True)
             if st.button('Exportar a Excel', key=60000):
                 grouped_df_cidem.to_excel('cidem.xlsx')
-
 
 
 
