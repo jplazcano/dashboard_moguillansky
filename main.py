@@ -578,7 +578,7 @@ if df is not None:
     total_fac_cidem_especialidad['Monto Total'] = total_fac_cidem_especialidad['Monto Total'].apply('$ {:,.0f}'.format)
     total_fac_cidem_especialidad['Cantidad'] = total_fac_cidem_especialidad['Cantidad'].apply('{:,.0f}'.format)
 
-    total_fac_cidem_especialidad.loc['Total'] = ['{:,.0f}'.format(total_cant_ctn), '$ {:,.0f}'.format(total_fac_ctn)]
+    total_fac_cidem_especialidad.loc['Total'] = ['{:,.0f}'.format(total_cant_cidem), '$ {:,.0f}'.format(total_fac_cidem)]
 
 
 
